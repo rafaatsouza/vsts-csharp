@@ -1,5 +1,6 @@
 ﻿using SimpleInjector;
 using System;
+using System.Linq;
 using Vsts.Domain.Service.Factories;
 using Vsts.Infra.Provider.Factories;
 
@@ -27,11 +28,11 @@ namespace Vsts.Test.Console
             try
             {
                 var TestList = vsProvider.GetWorkItemIdAsync($"[System.TeamProject] = '{TeamProject}' AND NOT [State] = 'Removed' AND NOT [State] = 'Closed' AND NOT [State] = 'New'").Result;
-                int[] ids = { TestList.WorkItems[0].Id };
+                int[] ids = TestList.WorkItems.Select(x => x.Id).ToArray();
                 
                 var TestWorkItem = vsProvider.GetWorkItemAsync(ids, fieldList).Result;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Console.WriteLine(ex.ToString());
                 System.Console.ReadKey();
