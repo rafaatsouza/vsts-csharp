@@ -75,7 +75,7 @@ namespace Vsts.Infra.Provider
             }
         }
 
-        public async Task<List<WorkItem>> GetWorkItemAsync(int[] workItemIds, string[] fields)
+        public async Task<List<WorkItem>> GetWorkItemAsync(List<int> workItemIds, List<string> fields)
         {
             string url = $"{_apiBaseUrl}_apis/wit/WorkItems?ids={string.Join(",", workItemIds)}&fields={string.Join(",", fields)}&api-version={_apiVersion}";
 
@@ -91,6 +91,33 @@ namespace Vsts.Infra.Provider
                 }
 
                 return VstsJson<List<WorkItem>>.Deserialize((JObject.Parse(content).SelectToken("value")).ToString());
+            }
+        }
+
+        public async Task<List<string>> GetWorkItemColumnsAsync()
+        {
+            //return new List<string>();
+            string url = $"{_apiBaseUrl}{_teamProject}/_apis/wit/fields?api-version={_apiVersion}";
+            
+            try
+            {
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
+
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+
+                if (string.IsNullOrEmpty(json))
+                {
+                    throw new InvalidCastException("Invalid Response Content from Vsts API - Is Null or Empty");
+                }
+
+                return (JObject.Parse(json)).SelectToken("value").Select(x => (string)x.SelectToken("referenceName")).ToList();
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 
