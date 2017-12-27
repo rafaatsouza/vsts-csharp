@@ -1,5 +1,6 @@
 ﻿using SimpleInjector;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Vsts.Domain.Service.Factories;
 using Vsts.Infra.Provider.Factories;
@@ -14,9 +15,7 @@ namespace Vsts.Test.Console
         {
             container = GetContainer();
             var vstsProviderFactory = container.GetInstance<IVstsProviderFactory>();
-
-            string[] fieldList = { "System.Id", "System.Title", "System.State", "System.IterationPath", "System.AssignedTo", "System.WorkItemType", "System.CreatedDate", "System.CreatedBy", "System.Description" };
-
+            
             //TODO: Fill variables before run
             var ApiVersion = "";
             var TeamProject = "";
@@ -27,10 +26,11 @@ namespace Vsts.Test.Console
 
             try
             {
+                var fields = vsProvider.GetWorkItemColumnsAsync().Result;
                 var TestList = vsProvider.GetWorkItemIdAsync($"[System.TeamProject] = '{TeamProject}' AND NOT [State] = 'Removed' AND NOT [State] = 'Closed' AND NOT [State] = 'New'").Result;
-                int[] ids = TestList.WorkItems.Select(x => x.Id).ToArray();
+                List<int> ids = TestList.WorkItems.Select(x => x.Id).ToList();
                 
-                var TestWorkItem = vsProvider.GetWorkItemAsync(ids, fieldList).Result;
+                var TestWorkItem = vsProvider.GetWorkItemAsync(ids, fields.GetRange(0, 10)).Result;
             }
             catch (Exception ex)
             {
