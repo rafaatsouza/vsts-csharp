@@ -5,5 +5,5 @@ The C# SDK for the Visual Studio Team Services API
 Install using [NuGet](https://www.nuget.org/packages/Vsts.Csharp):
 
 ```
-Install-Package vsts-csharp
+Install-Package Vsts.Csharp
 ```
