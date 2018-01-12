@@ -96,9 +96,8 @@ namespace Vsts.Infra.Provider
 
         public async Task<List<string>> GetWorkItemColumnsAsync()
         {
-            //return new List<string>();
             string url = $"{_apiBaseUrl}{_teamProject}/_apis/wit/fields?api-version={_apiVersion}";
-            
+
             try
             {
                 HttpResponseMessage response = await _httpClient.GetAsync(url);
@@ -129,5 +128,54 @@ namespace Vsts.Infra.Provider
             }
         }
 
+        public async Task<int> CreateWorkItemAsync(string workItemType, string subject, string description, List<Tuple<string, string>> NameValueFieldsList)
+        {
+            NameValueFieldsList.Add(new Tuple<string, string>("System.WorkItemType", workItemType));
+            NameValueFieldsList.Add(new Tuple<string, string>("System.Title", subject));
+            NameValueFieldsList.Add(new Tuple<string, string>("System.Description", description));
+
+            var FieldList = new List<WorkItemFieldsNameValuePair>();
+
+            foreach (var item in NameValueFieldsList)
+            {
+                FieldList.Add(new WorkItemFieldsNameValuePair()
+                {
+                    op = "add",
+                    path = $"/fields/{item.Item1}",
+                    value = item.Item2
+                });
+            }
+
+            var FieldValuesRequestJson = VstsJson<List<WorkItemFieldsNameValuePair>>.Serialize(FieldList);
+            var content = new StringContent(FieldValuesRequestJson, Encoding.ASCII, "application/json-patch+json");
+                        
+            string url = $"{_apiBaseUrl}{_teamProject}/_apis/wit/workitems/$Task?api-version={_apiVersion}";
+            
+            try
+            {
+                var request = new HttpRequestMessage(new HttpMethod("PATCH"), url)
+                {
+                    Content = content
+                };
+
+                using (var response = await _httpClient.SendAsync(request))
+                {
+                    response.EnsureSuccessStatusCode();
+
+                    var json = await response.Content.ReadAsStringAsync();
+
+                    if (string.IsNullOrEmpty(json))
+                    {
+                        throw new InvalidCastException("Invalid Response Content from Vsts API - Is Null or Empty");
+                    }
+
+                    return int.Parse(JObject.Parse(json).SelectToken("id").ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }
