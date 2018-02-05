@@ -17,20 +17,23 @@ namespace Vsts.Test.Console
             var vstsProviderFactory = container.GetInstance<IVstsProviderFactory>();
             
             //TODO: Fill variables before run
-            var ApiVersion = "";
-            var TeamProject = "";
+            var ApiVersion = "1.0";
             var Account = "";
             var Token = "";
 
-            var vsProvider = vstsProviderFactory.Create(ApiVersion, Account, TeamProject, Token);
+            var vsProjectProvider = vstsProviderFactory.CreateProjectProvider(ApiVersion, Account, Token);
+
+            var TeamProject = (vsProjectProvider.GetProjectsAsync()).Result[0].Name;
+
+            var vsWorkItemProvider = vstsProviderFactory.CreateWorkItemProvider(ApiVersion, Account, TeamProject, Token);
 
             try
             {
-                var fields = vsProvider.GetWorkItemColumnsAsync().Result;
-                var TestList = vsProvider.GetWorkItemIdAsync($"[System.TeamProject] = '{TeamProject}' AND NOT [State] = 'Removed' AND NOT [State] = 'Closed' AND NOT [State] = 'New'").Result;
+                var fields = vsWorkItemProvider.GetWorkItemColumnsAsync().Result;
+                var TestList = vsWorkItemProvider.GetWorkItemIdAsync($"[System.TeamProject] = '{TeamProject}' AND NOT [State] = 'Removed' AND NOT [State] = 'Closed' AND NOT [State] = 'New'").Result;
                 List<int> ids = TestList.WorkItems.Select(x => x.Id).ToList();
                 
-                var TestWorkItem = vsProvider.GetWorkItemAsync(ids, fields.GetRange(0, 10)).Result;
+                var TestWorkItem = vsWorkItemProvider.GetWorkItemAsync(ids, fields.GetRange(0, 10)).Result;
             }
             catch (Exception ex)
             {
