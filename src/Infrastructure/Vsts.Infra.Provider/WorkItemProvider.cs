@@ -13,7 +13,7 @@ using Vsts.Domain.Service.Interfaces;
 
 namespace Vsts.Infra.Provider
 {
-    public class VstsProvider : IVstsProvider, IDisposable
+    public class WorkItemProvider : IWorkItemProvider, IDisposable
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiVersion;
@@ -22,7 +22,7 @@ namespace Vsts.Infra.Provider
         private readonly string _token;
         private readonly string _apiBaseUrl;
 
-        public VstsProvider(string apiVersion, string account, string teamProject, string token)
+        public WorkItemProvider(string apiVersion, string account, string teamProject, string token)
         {
             _apiVersion = apiVersion;
             _account = account;

@@ -4,6 +4,7 @@ namespace Vsts.Domain.Service.Factories
 {
     public interface IVstsProviderFactory
     {
-        IVstsProvider Create(string apiVersion, string account, string teamProject, string token);
+        IWorkItemProvider CreateWorkItemProvider(string apiVersion, string account, string teamProject, string token);
+        IProjectProvider CreateProjectProvider(string apiVersion, string account, string token);
     }
 }

@@ -13,9 +13,14 @@ namespace Vsts.Infra.Provider.Factories
             _serviceProvider = serviceProvider;
         }
 
-        public IVstsProvider Create(string apiVersion, string account, string teamProject, string token)
+        public IWorkItemProvider CreateWorkItemProvider(string apiVersion, string account, string teamProject, string token)
         {
-            return new VstsProvider(apiVersion, account, teamProject, token);
+            return new WorkItemProvider(apiVersion, account, teamProject, token);
+        }
+
+        public IProjectProvider CreateProjectProvider(string apiVersion, string account, string token)
+        {
+            return new ProjectProvider(apiVersion, account, token);
         }
     }
 }

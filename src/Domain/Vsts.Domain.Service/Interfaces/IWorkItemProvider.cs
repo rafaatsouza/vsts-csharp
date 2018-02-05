@@ -5,7 +5,7 @@ using Vsts.Domain.Contract.Response;
 
 namespace Vsts.Domain.Service.Interfaces
 {
-    public interface IVstsProvider
+    public interface IWorkItemProvider
     {
         Task<int> CreateWorkItemAsync(string workItemType, string subject, string description, List<Tuple<string, string>> NameValueFieldsList);
 
