@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace Vsts.Domain.Contract.Response
+namespace Vsts.Domain.Contract.Dto
 {
     public class WorkItem
     {
