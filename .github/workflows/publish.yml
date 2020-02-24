@@ -11,7 +11,6 @@ jobs:
     - name: Publish NuGet
       uses: rohith/publish-nuget@v2.0.0
       with:
-        # Filepath of the project to be packaged, relative to root of repository
-        PROJECT_FILE_PATH: ../../src/Infrastructure/Vsts.Infra.Provider/Vsts.Infra.Provider.csproj
-        # API key for the NuGet feed
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+        PROJECT_FILE_PATH: src/Infrastructure/Vsts.Infra.Provider/Vsts.Infra.Provider.csproj # Filepath of the project to be packaged, relative to root of repository
+        VERSION_REGEX: <version>(.*)<\/version> # Regex pattern to extract version info in a capturing group
+        NUGET_KEY: ${{secrets.NUGET_API_KEY}} # API key for the NuGet feed
