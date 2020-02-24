@@ -5,12 +5,25 @@ on: [push]
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-    - name: Publish NuGet
-      uses: rohith/publish-nuget@v2.0.0
-      with:
-        PROJECT_FILE_PATH: src/Infrastructure/Vsts.Infra.Provider/Vsts.Infra.Provider.csproj # Filepath of the project to be packaged, relative to root of repository
-        VERSION_REGEX: <version>(.*)<\/version> # Regex pattern to extract version info in a capturing group
-        NUGET_KEY: ${{secrets.NUGET_API_KEY}} # API key for the NuGet feed
+      - uses: actions/checkout@v2
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.0
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 2.1
+
+      - name: build in Release
+        run: dotnet build src/Infrastructure/Vsts.Infra.Provider/Vsts.Infra.Provider.csproj --configuration Release
+      
+      - name: Publish NuGet
+        uses: rohith/publish-nuget@v2.0.0
+        with:
+          PROJECT_FILE_PATH: src/Infrastructure/Vsts.Infra.Provider/Vsts.Infra.Provider.csproj # Filepath of the project to be packaged, relative to root of repository
+          VERSION_REGEX: <version>(.*)<\/version> # Regex pattern to extract version info in a capturing group
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}} # API key for the NuGet feed
