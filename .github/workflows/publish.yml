@@ -16,7 +16,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 2.1
+          dotnet-version: 2.2
 
       - name: build in Release
         run: dotnet build src/Infrastructure/Vsts.Infra.Provider/Vsts.Infra.Provider.csproj --configuration Release
