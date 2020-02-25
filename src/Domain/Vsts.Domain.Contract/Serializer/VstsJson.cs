@@ -7,7 +7,7 @@ namespace Vsts.Domain.Contract.Serializer
 {
     public static class VstsJson<T> where T : class
     {
-        private static readonly JsonSerializerSettings settings = new JsonSerializerSettings()
+        private static JsonSerializerSettings settings = new JsonSerializerSettings()
         {
             NullValueHandling = NullValueHandling.Ignore,
             ContractResolver = new CamelCasePropertyNamesContractResolver(),

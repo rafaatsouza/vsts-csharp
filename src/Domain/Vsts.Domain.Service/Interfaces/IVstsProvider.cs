@@ -14,9 +14,9 @@ namespace Vsts.Domain.Service.Interfaces
         /// <param name="workItemType"></param>
         /// <param name="subject"></param>
         /// <param name="description"></param>
-        /// <param name="NameValueFieldsList"></param>
+        /// <param name="nameValueFieldsList"></param>
         /// <returns>Work item ID</returns>
-        Task<int> CreateWorkItemAsync(string workItemType, string subject, string description, List<Tuple<string, string>> NameValueFieldsList);
+        Task<int> CreateWorkItemAsync(string workItemType, string subject, string description, List<Tuple<string, string>> nameValueFieldsList);
 
         /// <summary>
         /// Returns work item list

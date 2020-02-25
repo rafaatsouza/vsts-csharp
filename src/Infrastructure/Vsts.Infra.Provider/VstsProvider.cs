@@ -20,8 +20,7 @@ namespace Vsts.Infra.Provider
         private readonly string teamProject;
         private readonly string token;
         private readonly string apiBaseUrl;
-
-        private const string ApiVersion = "5.1";
+        private readonly string apiVersion;
 
         public VstsProvider(IHttpClientProvider httpClientProvider,
             VstsConfigurationData configurationData)
@@ -37,6 +36,8 @@ namespace Vsts.Infra.Provider
                 ?? throw new ArgumentException($"{nameof(configurationData.Token)} null or empty");
             this.teamProject = configurationData.TeamProject
                 ?? throw new ArgumentException($"{nameof(configurationData.TeamProject)} null or empty");
+            this.apiVersion = configurationData.ApiVersion
+                ?? throw new ArgumentException($"{nameof(configurationData.ApiVersion)} null or empty");
 
             if (string.IsNullOrEmpty(configurationData.Organization))
             {
@@ -49,8 +50,7 @@ namespace Vsts.Infra.Provider
         public async Task<IEnumerable<Project>> GetProjectsAsync()
         {
             var reg = new Regex(@"(?<![\w\d])skip(?![\w\d])(\=(\d+))");
-
-            var url = $"{apiBaseUrl}_apis/projects?api-version={ApiVersion}&$skip=0";
+            var url = $"{apiBaseUrl}_apis/projects?api-version={apiVersion}&$skip=0";
             var completed = false;
             var projects = new List<Project>();
 
@@ -68,14 +68,14 @@ namespace Vsts.Infra.Provider
 
                     var json = await response.Content.ReadAsStringAsync();
 
-                    if (int.Parse(JObject.Parse(json).SelectToken("count").ToString()) == 0)
+                    projects.AddRange(VstsJson<IEnumerable<Project>>
+                        .Deserialize(JObject.Parse(json)?.SelectToken("value").ToString()));
+
+                    var countToken = JObject.Parse(json)?.SelectToken("count");
+                    
+                    if (int.TryParse(countToken.ToString(), out int count) && count == 0)
                     {
                         completed = true;
-                    }
-                    else
-                    {
-                        projects.AddRange(VstsJson<IEnumerable<Project>>
-                            .Deserialize(JObject.Parse(json).SelectToken("value").ToString()));
                     }
                 }
             }
@@ -85,7 +85,7 @@ namespace Vsts.Infra.Provider
 
         public async Task<Project> GetProjectAsync(string NameOrId)
         {
-            var url = $"{apiBaseUrl}_apis/projects/{NameOrId}?includeCapabilities=false&api-version={ApiVersion}";
+            var url = $"{apiBaseUrl}_apis/projects/{NameOrId}?includeCapabilities=false&api-version={apiVersion}";
 
             using (var httpClient = httpClientProvider.GetHttpClient(token))
             using (var response = await httpClient.GetAsync(url))
@@ -100,14 +100,17 @@ namespace Vsts.Infra.Provider
 
         public async Task<IEnumerable<WorkItem>> GetWorkItemsAsync(string where)
         {
-            var url = $"{apiBaseUrl}{teamProject}/_apis/wit/wiql?api-version={ApiVersion}";
+            var url = $"{apiBaseUrl}{teamProject}/_apis/wit/wiql?api-version={apiVersion}";
             var clause = where != null ? "WHERE " + where : "";
 
             var result = new List<WorkItem>();
 
-            var workItemQueryRequestJson = VstsJson<WorkItemQueryRequest>
-                .Serialize(new WorkItemQueryRequest { Query = $"SELECT * FROM WorkItems {clause}" });
-            var content = new StringContent(workItemQueryRequestJson, Encoding.UTF8, "application/json");
+            var workItemQueryRequest = new WorkItemQueryRequest 
+            { 
+                Query = $"SELECT * FROM WorkItems {clause}" 
+            };
+
+            var content = GetStringContent(workItemQueryRequest, "application/json");
 
             using (var httpClient = httpClientProvider.GetHttpClient(token))
             using (var response = await httpClient.PostAsync(url, content))
@@ -132,17 +135,17 @@ namespace Vsts.Infra.Provider
             return result;
         }
 
-        public async Task<int> CreateWorkItemAsync(string workItemType, string subject, string description, List<Tuple<string, string>> NameValueFieldsList)
+        public async Task<int> CreateWorkItemAsync(string workItemType, string subject, string description, List<Tuple<string, string>> nameValueFieldsList)
         {
-            NameValueFieldsList.Add(new Tuple<string, string>("System.WorkItemType", workItemType));
-            NameValueFieldsList.Add(new Tuple<string, string>("System.Title", subject));
-            NameValueFieldsList.Add(new Tuple<string, string>("System.Description", description));
+            nameValueFieldsList.Add(new Tuple<string, string>("System.WorkItemType", workItemType));
+            nameValueFieldsList.Add(new Tuple<string, string>("System.Title", subject));
+            nameValueFieldsList.Add(new Tuple<string, string>("System.Description", description));
 
-            var FieldList = new List<WorkItemFieldsNameValuePair>();
+            var fieldList = new List<WorkItemFieldsNameValuePair>();
 
-            foreach (var item in NameValueFieldsList)
+            foreach (var item in nameValueFieldsList)
             {
-                FieldList.Add(new WorkItemFieldsNameValuePair()
+                fieldList.Add(new WorkItemFieldsNameValuePair()
                 {
                     op = "add",
                     path = $"/fields/{item.Item1}",
@@ -150,14 +153,11 @@ namespace Vsts.Infra.Provider
                 });
             }
 
-            var FieldValuesRequestJson = VstsJson<List<WorkItemFieldsNameValuePair>>.Serialize(FieldList);
-            var content = new StringContent(FieldValuesRequestJson, Encoding.ASCII, "application/json-patch+json");
-
-            string url = $"{apiBaseUrl}{teamProject}/_apis/wit/workitems/$Task?api-version={ApiVersion}";
+            var url = $"{apiBaseUrl}{teamProject}/_apis/wit/workitems/$Task?api-version={apiVersion}";
 
             var request = new HttpRequestMessage(new HttpMethod("PATCH"), url)
             {
-                Content = content
+                Content = GetStringContent(fieldList, "application/json-patch+json")
             };
 
             using (var httpClient = httpClientProvider.GetHttpClient(token))
@@ -174,6 +174,11 @@ namespace Vsts.Infra.Provider
 
                 return int.Parse(JObject.Parse(json).SelectToken("id").ToString());
             }
+        }
+
+        private StringContent GetStringContent<T>(T data, string mediaType) where T : class 
+        {
+            return new StringContent(VstsJson<T>.Serialize(data), Encoding.ASCII, mediaType);
         }
     }
 }
